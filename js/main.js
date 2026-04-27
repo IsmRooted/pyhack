@@ -143,6 +143,25 @@ window.addEventListener('DOMContentLoaded', async () => {
     renderGlossaryScreen();
     setScreen('screen-glossary');
   });
+  // Click en links internos del glosario ("Relacionado: X, Y"): garantizar
+  // que la entrada destino exista en el DOM (limpiando filtro si lo había)
+  // y hacer scroll suave a ella sin dejar hash colgando en la URL.
+  document.getElementById('glossary-content').addEventListener('click', (ev) => {
+    const a = ev.target.closest && ev.target.closest('a[href^="#gl-"]');
+    if (!a) return;
+    ev.preventDefault();
+    const targetId = a.getAttribute('href').slice(1); // sin la #
+    // Limpiar filtro si había, para que la entrada destino esté visible
+    const search = document.getElementById('glossary-search');
+    if (search && search.value) {
+      search.value = '';
+      renderGlossaryScreen();
+    }
+    setTimeout(() => {
+      const target = document.getElementById(targetId);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 30);
+  });
   const glossarySearch = document.getElementById('glossary-search');
   if (glossarySearch) {
     glossarySearch.addEventListener('input', () => renderGlossaryScreen());
