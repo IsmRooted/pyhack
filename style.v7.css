@@ -718,7 +718,7 @@ html, body {
 
 #screen-game main {
   display: grid;
-  grid-template-columns: var(--left-w) 6px 1fr;
+  grid-template-columns: var(--left-w) 10px 1fr;
   grid-template-rows: 1fr;
   height: 100%;
   overflow: hidden;
@@ -812,11 +812,11 @@ html, body {
 }
 .splitter-v {
   cursor: col-resize;
-  width: 6px;
+  width: 10px;
 }
 .splitter-h {
   cursor: row-resize;
-  height: 6px;
+  height: 10px;
 }
 .splitter::after {
   content: '';
@@ -1060,7 +1060,7 @@ html, body {
 
 #right-panel {
   display: grid;
-  grid-template-rows: var(--netmap-h) 6px 1fr auto;
+  grid-template-rows: var(--netmap-h) 10px 1fr auto;
   background: var(--bg-base);
   overflow: hidden;
   height: 100%;

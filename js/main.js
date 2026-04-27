@@ -971,9 +971,18 @@ function setStatus(msg) {
 const SPLITTER_KEY = 'pyhack_splitters';
 
 function initSplitters() {
-  setupSplit('splitter-lr',      'x', '--left-w',    320, 800);
-  setupSplit('splitter-mission', 'y', '--mission-h', 80,  600);
-  setupSplit('splitter-netmap',  'y', '--netmap-h',  100, 700);
+  // Los rangos se evalúan en cada drag (funciones), así que se adaptan al
+  // tamaño actual de la ventana en lugar de quedarse atados a un máximo fijo.
+  // El "max" siempre deja un margen mínimo para el panel adyacente.
+  setupSplit('splitter-lr',      'x', '--left-w',
+    320,
+    () => Math.max(800, window.innerWidth - 380));   // deja >=380 para right
+  setupSplit('splitter-mission', 'y', '--mission-h',
+    80,
+    () => Math.max(600, window.innerHeight - 220));  // deja >=220 para editor
+  setupSplit('splitter-netmap',  'y', '--netmap-h',
+    100,
+    () => Math.max(700, window.innerHeight - 160));  // deja >=160 para terminal
 }
 
 function setupSplit(id, axis, varName, min, max, inverse = false) {
@@ -982,6 +991,10 @@ function setupSplit(id, axis, varName, min, max, inverse = false) {
   let dragging = false;
   let startCoord = 0;
   let startSize = 0;
+
+  // min y max pueden ser número o función — permite recalcular según viewport
+  function getMin() { return typeof min === 'function' ? min() : min; }
+  function getMax() { return typeof max === 'function' ? max() : max; }
 
   function readVar() {
     const v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
@@ -992,7 +1005,7 @@ function setupSplit(id, axis, varName, min, max, inverse = false) {
     const cur = axis === 'x' ? e.clientX : e.clientY;
     const delta = cur - startCoord;
     let next = startSize + (inverse ? -delta : delta);
-    next = Math.max(min, Math.min(max, next));
+    next = Math.max(getMin(), Math.min(getMax(), next));
     document.documentElement.style.setProperty(varName, next + 'px');
     if (typeof cm !== 'undefined' && cm) cm.refresh();
   }
@@ -1046,7 +1059,19 @@ function loadSplitterSizes() {
     if (!raw) return;
     const sizes = JSON.parse(raw);
     const root = document.documentElement;
-    Object.entries(sizes).forEach(([k, v]) => root.style.setProperty(k, v));
+    // Saneamiento: si un tamaño guardado supera el máximo razonable para el
+    // viewport ACTUAL, lo recortamos. Evita que el splitter quede fuera de
+    // la pantalla cuando cambias de ventana grande a pequeña.
+    const maxes = {
+      '--left-w':    Math.max(800, window.innerWidth - 380),
+      '--mission-h': Math.max(600, window.innerHeight - 220),
+      '--netmap-h':  Math.max(700, window.innerHeight - 160),
+    };
+    Object.entries(sizes).forEach(([k, v]) => {
+      const px = parseInt(v, 10) || 0;
+      const safe = maxes[k] ? Math.min(px, maxes[k]) : px;
+      root.style.setProperty(k, safe + 'px');
+    });
   } catch (e) {}
 }
 
