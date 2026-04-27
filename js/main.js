@@ -14,6 +14,27 @@ const STORAGE = {
   adventures: 'pyhack_completions',
   theoryEnabled: 'pyhack_theory_enabled',
   livesEnabled: 'pyhack_lives_enabled',
+  // Sistema pedagógico (4-tier hints + cheatsheet)
+  hintsSeen: id => `pyhack_hints_seen_${id}`,    // JSON array: ["theory", "strategy"]
+  cheatsheetTab: 'pyhack_cheatsheet_tab',        // última pestaña vista
+  // Layout: lock de splitters
+  layoutLocked: 'pyhack_layout_locked',          // "1" | "0"
+};
+
+// Tamaños por defecto de los paneles (los del CSS inicial — :root)
+const LAYOUT_DEFAULTS = {
+  '--left-w':    '460px',
+  '--mission-h': '220px',
+  '--netmap-h':  '240px',
+};
+
+// Orden canónico de los tiers de pista (de menor a mayor revelación)
+const TIER_ORDER = ['theory', 'strategy', 'skeleton', 'solution'];
+const TIER_LABELS = {
+  theory:   { tag: '📖 TEORÍA',     title: 'Teoría — concepto y por qué' },
+  strategy: { tag: '🧭 ESTRATEGIA', title: 'Estrategia — pseudocódigo paso a paso' },
+  skeleton: { tag: '🪜 ESQUELETO',  title: 'Esqueleto — código con huecos' },
+  solution: { tag: '💡 SOLUCIÓN',   title: 'Solución de referencia' },
 };
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -30,8 +51,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   loadSession();
   loadSplitterSizes();
   initSplitters();
+  applyLayoutLock();
   updateTheoryButton();
   updateLivesButton();
+  initCheatsheet();
 
   buildTutorialUI();
   document.getElementById('howto-content').innerHTML = HOWTO_CONTENT;
@@ -89,11 +112,45 @@ window.addEventListener('DOMContentLoaded', async () => {
     loadLevelByIndex(targetIdx, false);
   });
 
-  document.getElementById('hint-toggle').addEventListener('click', () => openHintOverlay('code'));
-  document.getElementById('theory-hint-btn').addEventListener('click', () => openHintOverlay('theory'));
+  // 4-tier hints
+  document.querySelectorAll('.tier-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tier = btn.dataset.tier;
+      openHintOverlay(tier);
+    });
+  });
   document.getElementById('hint-overlay-close').addEventListener('click', () => {
     document.getElementById('overlay-hint').classList.add('hidden');
   });
+
+  // Cheatsheet — siempre abre como modal con Ctrl+K o el botón
+  document.getElementById('cheatsheet-open-btn').addEventListener('click', openCheatsheetModal);
+  // Layout: lock + reset
+  document.getElementById('layout-lock-btn').addEventListener('click', toggleLayoutLock);
+  document.getElementById('layout-reset-btn').addEventListener('click', resetLayoutToDefaults);
+  document.getElementById('cheatsheet-modal-close').addEventListener('click', () => {
+    document.getElementById('overlay-cheatsheet').classList.add('hidden');
+  });
+  document.querySelectorAll('.cheat-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.cheatTab || tab.dataset.cheatTabModal;
+      setCheatsheetTab(tabName);
+    });
+  });
+
+  // Glosario
+  document.getElementById('btn-glossary').addEventListener('click', () => {
+    renderGlossaryScreen();
+    setScreen('screen-glossary');
+  });
+  const glossarySearch = document.getElementById('glossary-search');
+  if (glossarySearch) {
+    glossarySearch.addEventListener('input', () => renderGlossaryScreen());
+  }
+  // Tooltip de glosario delegado en document
+  document.addEventListener('mouseover', onGlossaryHover);
+  document.addEventListener('mouseout', onGlossaryUnhover);
+  document.addEventListener('click', onGlossaryClick);
   document.getElementById('solution-toggle').addEventListener('click', () => {
     const btn = document.getElementById('solution-toggle');
     btn.classList.toggle('expanded');
@@ -108,7 +165,15 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (document.getElementById('screen-game').classList.contains('active')) onRun();
       return;
     }
-    if (ev.key === 'Escape') { hideAllOverlays(); return; }
+    // Ctrl+K abre el cheatsheet modal (si estamos en pantalla de juego)
+    if (ev.ctrlKey && (ev.key === 'k' || ev.key === 'K')) {
+      if (document.getElementById('screen-game').classList.contains('active')) {
+        ev.preventDefault();
+        openCheatsheetModal();
+      }
+      return;
+    }
+    if (ev.key === 'Escape') { hideAllOverlays(); hideGlossaryTooltip(); return; }
     if (ev.key === 'Enter' && !ev.ctrlKey && !ev.shiftKey && !ev.altKey) {
       const overlays = [
         { id: 'overlay-hint',        primary: 'hint-overlay-close' },
@@ -140,6 +205,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('overlay-exam-intro').classList.add('hidden');
     setStatus('Evaluación en curso. Sin pista.');
     refreshEditor();
+  });
+  document.getElementById('complete-stay').addEventListener('click', () => {
+    document.getElementById('overlay-complete').classList.add('hidden');
+    setStatus('Revisando. Pulsa ▶ Ejecutar para volver a ver el resumen, o usa ◀ ▶ del header para navegar.');
   });
   document.getElementById('complete-replay').addEventListener('click', () => {
     document.getElementById('overlay-complete').classList.add('hidden');
@@ -396,9 +465,10 @@ function buildLevelSelectUI() {
     chapterLevels.forEach(lvl => {
       const idx = LEVELS.indexOf(lvl);
       const completed = lvl.id <= max;
-      // En PyHack, los stubs aparecen pero no se pueden cargar
+      // En PyHack, los stubs aparecen pero no se pueden cargar.
+      // Resto de niveles: todos accesibles (sin gating por progreso).
       const isStub = !!lvl.stub;
-      const locked = isStub || (idx > 0 && idx > max);
+      const locked = isStub;
       const isExam = lvl.is_exam;
       const card = document.createElement('div');
       card.className = 'level-card'
@@ -480,23 +550,14 @@ function loadLevelByIndex(idx, showIntro = false) {
   document.getElementById('level-num').textContent = String(lvl.id).padStart(2, '0');
   document.getElementById('level-title').textContent = lvl.title;
   document.getElementById('level-location').textContent = '— ' + lvl.location;
-  document.getElementById('mission-text').textContent = lvl.mission || '';
+  // Mission: decorada con tooltips de glosario, preserva saltos de línea como <br>
+  const missionEl = document.getElementById('mission-text');
+  const missionHtml = escapeHtml(lvl.mission || '').replace(/\n/g, '<br>');
+  missionEl.innerHTML = (typeof decorateGlossaryTerms === 'function')
+    ? decorateGlossaryTerms(missionHtml)
+    : missionHtml;
 
-  const t = (typeof THEORIES !== 'undefined') ? THEORIES[lvl.id] : null;
-  const hintToggle = document.getElementById('hint-toggle');
-  const theoryHintBtn = document.getElementById('theory-hint-btn');
-
-  if (lvl.is_exam) {
-    hintToggle.textContent = '🔒 bloqueada';
-    hintToggle.disabled = true;
-    theoryHintBtn.textContent = '🔒 bloqueada';
-    theoryHintBtn.disabled = true;
-  } else {
-    hintToggle.textContent = '💡 código';
-    hintToggle.disabled = !lvl.hint;
-    theoryHintBtn.textContent = '📖 teoría';
-    theoryHintBtn.disabled = !t;
-  }
+  refreshTierButtons(lvl);
 
   const restPanel = document.getElementById('restrictions-panel');
   const restList = document.getElementById('restrictions-list');
@@ -518,14 +579,9 @@ function loadLevelByIndex(idx, showIntro = false) {
   log(`Operación ${String(lvl.id).padStart(2, '0')}: ${lvl.title}`, 'info');
   log(`Lugar: ${lvl.location}`, 'log');
 
-  const maxCompleted = parseInt(localStorage.getItem(STORAGE.maxLevel) || '0', 10);
   document.getElementById('prev-level').disabled = (idx === 0);
-  document.getElementById('next-level').disabled =
-    (idx === LEVELS.length - 1) || (idx + 1 > maxCompleted);
-  document.getElementById('next-level').title =
-    (idx + 1 > maxCompleted)
-      ? 'Bloqueada — completa esta operación primero'
-      : 'Operación siguiente';
+  document.getElementById('next-level').disabled = (idx === LEVELS.length - 1);
+  document.getElementById('next-level').title = 'Operación siguiente';
 
   localStorage.setItem(STORAGE.lastLevel, String(idx));
 
@@ -538,31 +594,138 @@ function loadLevelByIndex(idx, showIntro = false) {
   }
 }
 
-function openHintOverlay(kind) {
+// === Sistema de pistas en 4 capas ============================
+//   theory   → THEORIES[lvl.id]
+//   strategy → lvl.strategy (string, pseudocódigo plano)
+//   skeleton → lvl.skeleton (string, código con [TODO])
+//   solution → lvl.hint     (string, solución completa — campo histórico)
+
+function getTierContent(lvl, tier) {
+  if (tier === 'theory') {
+    const t = (typeof THEORIES !== 'undefined') ? THEORIES[lvl.id] : null;
+    return t ? { title: t.title || lvl.concept || 'Teoría', html: t.body || '' } : null;
+  }
+  if (tier === 'strategy') {
+    if (!lvl.strategy) return null;
+    return { title: 'Estrategia para este nivel', html: '<pre>' + escapeHtml(lvl.strategy) + '</pre>' };
+  }
+  if (tier === 'skeleton') {
+    if (!lvl.skeleton) return null;
+    return { title: 'Esqueleto — rellena los [TODO]', html: '<pre>' + escapeHtml(lvl.skeleton) + '</pre>' };
+  }
+  if (tier === 'solution') {
+    if (!lvl.hint) return null;
+    return { title: 'Solución de referencia', html: '<pre>' + escapeHtml(lvl.hint) + '</pre>' };
+  }
+  return null;
+}
+
+function getTiersSeen(levelId) {
+  try {
+    const raw = localStorage.getItem(STORAGE.hintsSeen(levelId));
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch (e) { return new Set(); }
+}
+function markTierSeen(levelId, tier) {
+  const set = getTiersSeen(levelId);
+  set.add(tier);
+  localStorage.setItem(STORAGE.hintsSeen(levelId), JSON.stringify([...set]));
+}
+
+function refreshTierButtons(lvl) {
+  const seen = getTiersSeen(lvl.id);
+  TIER_ORDER.forEach((tier, idx) => {
+    const btn = document.getElementById('tier-btn-' + tier);
+    const tag = document.getElementById('tier-tag-' + tier);
+    if (!btn) return;
+
+    const content = getTierContent(lvl, tier);
+    const exists = !!content;
+
+    btn.classList.remove('locked', 'unlocked', 'seen', 'exam-blocked');
+    btn.disabled = false;
+
+    if (lvl.is_exam) {
+      btn.classList.add('exam-blocked');
+      btn.disabled = true;
+      tag.textContent = 'bloq.';
+      return;
+    }
+
+    if (!exists) {
+      btn.classList.add('locked');
+      btn.disabled = true;
+      tag.textContent = 'no disp.';
+      return;
+    }
+
+    // Está disponible. ¿Está desbloqueado?
+    // El primer tier (theory) siempre está disponible si existe.
+    // Los siguientes solo si el alumno ha visto el anterior.
+    const prevTier = idx > 0 ? TIER_ORDER[idx - 1] : null;
+    const prevSeenOrAbsent = !prevTier || seen.has(prevTier);
+    if (!prevSeenOrAbsent) {
+      btn.classList.add('locked');
+      btn.disabled = true;
+      tag.textContent = 'usa la anterior';
+      return;
+    }
+
+    if (seen.has(tier)) {
+      btn.classList.add('seen');
+      tag.textContent = 'visto';
+    } else {
+      btn.classList.add('unlocked');
+      tag.textContent = 'pulsa';
+    }
+  });
+}
+
+function openHintOverlay(tier) {
   const lvl = game.level;
-  if (!lvl) return;
-  if (lvl.is_exam) return;  // bloqueada en exámenes
+  if (!lvl || lvl.is_exam) return;
+  const content = getTierContent(lvl, tier);
+  if (!content) return;
+
+  // ¿Está desbloqueado?
+  const idx = TIER_ORDER.indexOf(tier);
+  if (idx > 0) {
+    const seen = getTiersSeen(lvl.id);
+    const prev = TIER_ORDER[idx - 1];
+    const prevContent = getTierContent(lvl, prev);
+    if (prevContent && !seen.has(prev)) {
+      log(`Capa "${TIER_LABELS[tier].tag}" bloqueada — usa antes "${TIER_LABELS[prev].tag}".`, 'err');
+      return;
+    }
+  }
+
   const overlay = document.getElementById('overlay-hint');
   const tag = document.getElementById('hint-overlay-tag');
   const title = document.getElementById('hint-overlay-title');
   const body = document.getElementById('hint-overlay-body');
 
-  if (kind === 'theory') {
-    const t = (typeof THEORIES !== 'undefined') ? THEORIES[lvl.id] : null;
-    if (!t) return;
-    tag.textContent = '📖 TEORÍA';
-    tag.style.background = 'var(--cyan)';
-    tag.style.color = '#04101c';
-    title.textContent = t.title || lvl.concept || 'Teoría';
-    body.innerHTML = t.body || '';
-  } else {
-    if (!lvl.hint) return;
-    tag.textContent = '💡 PISTA DE CÓDIGO';
-    tag.style.background = 'var(--amber)';
-    tag.style.color = '#1f1308';
-    title.textContent = 'Sugerencia de código';
-    body.innerHTML = '<pre>' + escapeHtml(lvl.hint) + '</pre>';
-  }
+  tag.textContent = TIER_LABELS[tier].tag;
+  // Color por tier:
+  const palette = {
+    theory:   { bg: 'var(--cyan)',  fg: '#04101c' },
+    strategy: { bg: '#fbbf24',      fg: '#1f1308' },
+    skeleton: { bg: '#a78bfa',      fg: '#0f071c' },
+    solution: { bg: '#f87171',      fg: '#240b0b' },
+  }[tier];
+  tag.style.background = palette.bg;
+  tag.style.color = palette.fg;
+
+  title.textContent = content.title;
+  body.dataset.tier = tier;
+  // Decorar términos del glosario en el contenido HTML
+  body.innerHTML = (typeof decorateGlossaryTerms === 'function')
+    ? decorateGlossaryTerms(content.html)
+    : content.html;
+
+  markTierSeen(lvl.id, tier);
+  refreshTierButtons(lvl);
+
   overlay.classList.remove('hidden');
   setTimeout(() => document.getElementById('hint-overlay-close').focus(), 50);
 }
@@ -570,8 +733,11 @@ function openHintOverlay(kind) {
 function showLevelIntro(lvl) {
   document.getElementById('intro-location').textContent = lvl.location;
   document.getElementById('intro-title').textContent = `OP-${String(lvl.id).padStart(2, '0')} — ${lvl.title}`;
-  document.getElementById('intro-story').textContent = lvl.intro || '';
-  document.getElementById('intro-mission').textContent = (lvl.mission || '').split('\n')[0];
+  // Story e mission: decoradas con tooltips de glosario
+  const decorate = (s) => (typeof decorateGlossaryTerms === 'function')
+    ? decorateGlossaryTerms(escapeHtml(s)) : escapeHtml(s);
+  document.getElementById('intro-story').innerHTML = decorate(lvl.intro || '');
+  document.getElementById('intro-mission').innerHTML = decorate((lvl.mission || '').split('\n')[0]);
   document.getElementById('intro-concept').textContent = lvl.concept || '';
   document.getElementById('overlay-intro').classList.remove('hidden');
 }
@@ -712,6 +878,9 @@ function onLevelWin(lvl) {
   updateLivesUI();
   updateMenuMedals();
 
+  // Delay de 800ms para que el alumno tenga tiempo de leer el output del
+  // terminal antes de que aparezca el overlay tapándolo. Si quiere más
+  // tiempo, el overlay tiene un botón "Revisar terminal" que lo cierra.
   setTimeout(() => {
     document.getElementById('complete-title').textContent =
       lvl.is_final ? '🏆 Caldera neutralizada' : '✓ Operación completada';
@@ -726,7 +895,7 @@ function onLevelWin(lvl) {
       if (cm) cm.getInputField().blur();
       setTimeout(() => nextBtn.focus(), 50);
     }
-  }, 350);
+  }, 800);
 }
 
 function populateTheoryBlock(lvl) {
@@ -788,7 +957,7 @@ function initSplitters() {
   setupSplit('splitter-netmap',  'y', '--netmap-h',  100, 700);
 }
 
-function setupSplit(id, axis, varName, min, max) {
+function setupSplit(id, axis, varName, min, max, inverse = false) {
   const el = document.getElementById(id);
   if (!el) return;
   let dragging = false;
@@ -802,7 +971,8 @@ function setupSplit(id, axis, varName, min, max) {
   function onMove(e) {
     if (!dragging) return;
     const cur = axis === 'x' ? e.clientX : e.clientY;
-    let next = startSize + (cur - startCoord);
+    const delta = cur - startCoord;
+    let next = startSize + (inverse ? -delta : delta);
     next = Math.max(min, Math.min(max, next));
     document.documentElement.style.setProperty(varName, next + 'px');
     if (typeof cm !== 'undefined' && cm) cm.refresh();
@@ -819,6 +989,7 @@ function setupSplit(id, axis, varName, min, max) {
     saveSplitterSizes();
   }
   el.addEventListener('mousedown', e => {
+    if (isLayoutLocked()) return;     // candado activo — splitter inmovilizado
     dragging = true;
     startCoord = axis === 'x' ? e.clientX : e.clientY;
     startSize = readVar();
@@ -831,6 +1002,7 @@ function setupSplit(id, axis, varName, min, max) {
   });
   // Doble click → resetear al default (recogido del CSS al cargar la página)
   el.addEventListener('dblclick', () => {
+    if (isLayoutLocked()) return;
     document.documentElement.style.removeProperty(varName);
     if (typeof cm !== 'undefined' && cm) cm.refresh();
     saveSplitterSizes();
@@ -857,4 +1029,153 @@ function loadSplitterSizes() {
     const root = document.documentElement;
     Object.entries(sizes).forEach(([k, v]) => root.style.setProperty(k, v));
   } catch (e) {}
+}
+
+// ------------------------------------------------------------
+// Lock del layout — congela los splitters en su posición actual
+// ------------------------------------------------------------
+
+function isLayoutLocked() {
+  return localStorage.getItem(STORAGE.layoutLocked) === '1';
+}
+
+function setLayoutLocked(on) {
+  localStorage.setItem(STORAGE.layoutLocked, on ? '1' : '0');
+  applyLayoutLock();
+}
+
+function toggleLayoutLock() {
+  setLayoutLocked(!isLayoutLocked());
+}
+
+function applyLayoutLock() {
+  const locked = isLayoutLocked();
+  // Marca el body para que el CSS pueda matar los cursores y opacidad
+  document.body.classList.toggle('layout-locked', locked);
+  // Feedback en el botón
+  const icon  = document.getElementById('layout-lock-icon');
+  const label = document.getElementById('layout-lock-label');
+  if (icon)  icon.textContent  = locked ? '🔒' : '🔓';
+  if (label) label.textContent = locked ? 'FIJO' : 'LIBRE';
+}
+
+function resetLayoutToDefaults() {
+  const root = document.documentElement;
+  Object.keys(LAYOUT_DEFAULTS).forEach(k => {
+    root.style.setProperty(k, LAYOUT_DEFAULTS[k]);
+  });
+  saveSplitterSizes();
+  if (typeof cm !== 'undefined' && cm) cm.refresh();
+}
+
+// ============================================================
+// CHEATSHEET — overlay modal (referencia rápida de Python/APIs)
+// Pulsa Ctrl+K o el botón "📚 CHEAT" del header para abrirlo.
+// ============================================================
+
+function getCheatsheetTab() {
+  return localStorage.getItem(STORAGE.cheatsheetTab) || 'api';
+}
+
+function setCheatsheetTab(tab) {
+  localStorage.setItem(STORAGE.cheatsheetTab, tab);
+  document.querySelectorAll('.cheat-tab').forEach(t => {
+    const tn = t.dataset.cheatTab || t.dataset.cheatTabModal;
+    t.classList.toggle('active', tn === tab);
+  });
+  const body = document.getElementById('cheatsheet-modal-body');
+  if (body && typeof renderCheatsheetTab === 'function') {
+    body.innerHTML = renderCheatsheetTab(tab);
+  }
+}
+
+function openCheatsheetModal() {
+  document.getElementById('overlay-cheatsheet').classList.remove('hidden');
+  setCheatsheetTab(getCheatsheetTab());
+}
+
+function initCheatsheet() {
+  // Marcar la pestaña activa según el último uso
+  document.querySelectorAll('.cheat-tab').forEach(t => {
+    const tn = t.dataset.cheatTab || t.dataset.cheatTabModal;
+    t.classList.toggle('active', tn === getCheatsheetTab());
+  });
+}
+
+// ============================================================
+// GLOSARIO — tooltips inline + página completa
+// ============================================================
+
+let _glossaryHoverTarget = null;
+let _glossaryHoverTimer = null;
+
+function onGlossaryHover(ev) {
+  const el = ev.target.closest && ev.target.closest('.glossary-term');
+  if (!el) return;
+  _glossaryHoverTarget = el;
+  clearTimeout(_glossaryHoverTimer);
+  _glossaryHoverTimer = setTimeout(() => showGlossaryTooltip(el), 120);
+}
+function onGlossaryUnhover(ev) {
+  const el = ev.target.closest && ev.target.closest('.glossary-term');
+  if (!el || el !== _glossaryHoverTarget) return;
+  _glossaryHoverTarget = null;
+  clearTimeout(_glossaryHoverTimer);
+  hideGlossaryTooltip();
+}
+function onGlossaryClick(ev) {
+  const el = ev.target.closest && ev.target.closest('.glossary-term');
+  if (!el) return;
+  const term = el.dataset.term;
+  if (!term) return;
+  // Click → llevar al glosario completo y hacer scroll
+  ev.preventDefault();
+  hideGlossaryTooltip();
+  renderGlossaryScreen();
+  setScreen('screen-glossary');
+  setTimeout(() => {
+    const target = document.getElementById('gl-' + term.replace(/[^a-zA-Z0-9_-]/g, '_'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 60);
+}
+function showGlossaryTooltip(el) {
+  if (typeof getGlossaryEntry !== 'function') return;
+  const term = el.dataset.term;
+  const entry = getGlossaryEntry(term);
+  if (!entry) return;
+  const tt = document.getElementById('glossary-tooltip');
+  if (!tt) return;
+  tt.innerHTML = `<strong>${escapeHtml(term)}</strong><br>${entry.short || ''}
+    <span class="glossary-tooltip-link">click → glosario completo</span>`;
+  tt.classList.remove('hidden');
+  // Posicionar
+  const rect = el.getBoundingClientRect();
+  const ttw = tt.offsetWidth;
+  const tth = tt.offsetHeight;
+  let left = rect.left + rect.width / 2 - ttw / 2;
+  let top = rect.bottom + 8;
+  if (left < 8) left = 8;
+  if (left + ttw > window.innerWidth - 8) left = window.innerWidth - ttw - 8;
+  if (top + tth > window.innerHeight - 8) top = rect.top - tth - 8;
+  tt.style.left = left + 'px';
+  tt.style.top  = top + 'px';
+}
+function hideGlossaryTooltip() {
+  const tt = document.getElementById('glossary-tooltip');
+  if (tt) tt.classList.add('hidden');
+}
+
+function renderGlossaryScreen() {
+  if (typeof renderGlossaryPage !== 'function') return;
+  const search = document.getElementById('glossary-search');
+  const filter = search ? search.value : '';
+  const html = renderGlossaryPage(filter);
+  const container = document.getElementById('glossary-content');
+  if (container) container.innerHTML = html;
+  // Contador
+  if (typeof getGlossaryStats === 'function') {
+    const stats = getGlossaryStats();
+    const cnt = document.getElementById('glossary-count');
+    if (cnt) cnt.textContent = `${stats.total} términos`;
+  }
 }

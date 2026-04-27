@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PyHack — Python ofensivo desde cero</title>
+<title>PyHack — Python aplicado a ciberseguridad</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -162,7 +162,7 @@
     <div class="menu-container">
       <header class="menu-header">
         <h1 class="menu-title">PyHack</h1>
-        <p class="menu-subtitle">Python ofensivo desde cero · Sentinel Labs</p>
+        <p class="menu-subtitle">Python aplicado a ciberseguridad · Sentinel Labs</p>
       </header>
 
       <div class="menu-grid">
@@ -195,6 +195,7 @@
             <button class="menu-btn" id="btn-levelselect">🎯 Operaciones</button>
             <button class="menu-btn" id="btn-diary">📋 Bitácora</button>
             <button class="menu-btn" id="btn-story">📖 Briefing completo</button>
+            <button class="menu-btn" id="btn-glossary">🔤 Glosario</button>
           </div>
         </nav>
       </div>
@@ -263,6 +264,19 @@
     <div id="story-content" class="readable"></div>
   </section>
 
+  <!-- ======= GLOSARIO (PÁGINA COMPLETA) ======= -->
+  <section id="screen-glossary" class="screen">
+    <header class="screen-header">
+      <button class="back-btn" data-back>◀ Menú</button>
+      <h2>🔤 Glosario técnico</h2>
+    </header>
+    <div class="glossary-search-wrap">
+      <input type="text" id="glossary-search" placeholder="Buscar término (ej: XOR, regex, IOC, hash)…" autocomplete="off">
+      <span id="glossary-count" class="glossary-count"></span>
+    </div>
+    <div id="glossary-content" class="readable"></div>
+  </section>
+
   <!-- ======= JUEGO ======= -->
   <section id="screen-game" class="screen">
     <header>
@@ -273,7 +287,7 @@
         <span id="level-title">…</span>
         <span id="level-location" class="lvl-location"></span>
       </div>
-      <div id="game-stats" title="Cover, items, teoría">
+      <div id="game-stats" title="Cover, items, teoría, cheatsheet">
         <div id="lives-display" class="lives" title="Cover meter — cada error de Python te quema un poco"></div>
         <button id="potion-btn" class="potion-btn" title="Usar VPN burner (recupera cover)" disabled>
           <span class="potion-icon">🛡</span>
@@ -285,6 +299,15 @@
         <button id="theory-toggle-btn" class="theory-toggle-btn" title="Mostrar/ocultar teoría tras cada operación">
           <span class="theory-icon">📖</span>
           <span id="theory-state">ON</span>
+        </button>
+        <button id="cheatsheet-open-btn" class="theory-toggle-btn" title="Abrir cheatsheet — referencia rápida de APIs, stdlib y sintaxis Python (Ctrl+K)">
+          <span>📚</span><span>CHEAT</span>
+        </button>
+        <button id="layout-lock-btn" class="theory-toggle-btn" title="Bloquear/desbloquear el redimensionado de paneles">
+          <span id="layout-lock-icon">🔓</span><span id="layout-lock-label">LIBRE</span>
+        </button>
+        <button id="layout-reset-btn" class="theory-toggle-btn" title="Restaurar el tamaño original de los paneles">
+          <span>↺</span><span>RESET</span>
         </button>
       </div>
       <div id="level-nav">
@@ -300,11 +323,30 @@
           <p id="mission-text">…</p>
           <h3>Concepto</h3>
           <div id="concept-pill" class="pill"></div>
-          <h3>Ayuda
-            <button id="theory-hint-btn" class="mini-btn">📖 teoría</button>
-            <button id="hint-toggle" class="mini-btn">💡 código</button>
-          </h3>
-          <p class="help-note">La teoría y la pista de código se abren en una ventana aparte para leerlas a tamaño cómodo.</p>
+          <h3>Ayuda — pulsa en orden, cada capa desbloquea la siguiente</h3>
+          <div class="hint-tiers">
+            <button class="tier-btn" data-tier="theory" id="tier-btn-theory" title="Concepto explicado a fondo">
+              <span class="tier-icon">📖</span>
+              <span class="tier-label">Teoría</span>
+              <span class="tier-tag" id="tier-tag-theory"></span>
+            </button>
+            <button class="tier-btn" data-tier="strategy" id="tier-btn-strategy" title="Pseudocódigo paso a paso (sin Python)">
+              <span class="tier-icon">🧭</span>
+              <span class="tier-label">Estrategia</span>
+              <span class="tier-tag" id="tier-tag-strategy"></span>
+            </button>
+            <button class="tier-btn" data-tier="skeleton" id="tier-btn-skeleton" title="Código con huecos para rellenar">
+              <span class="tier-icon">🪜</span>
+              <span class="tier-label">Esqueleto</span>
+              <span class="tier-tag" id="tier-tag-skeleton"></span>
+            </button>
+            <button class="tier-btn" data-tier="solution" id="tier-btn-solution" title="Solución completa comentada">
+              <span class="tier-icon">💡</span>
+              <span class="tier-label">Solución</span>
+              <span class="tier-tag" id="tier-tag-solution"></span>
+            </button>
+          </div>
+          <p class="help-note">La capa siguiente se desbloquea solo cuando consultas la anterior. Intenta resolver con la capa más baja posible.</p>
         </div>
         <div id="restrictions-panel" class="hidden">
           <h3>⚠ Reglas del examen</h3>
@@ -347,7 +389,7 @@
     </main>
   </section>
 
-  <!-- ======= OVERLAY: AYUDA (teoría / código) ======= -->
+  <!-- ======= OVERLAY: AYUDA (teoría / estrategia / esqueleto / solución) ======= -->
   <div id="overlay-hint" class="overlay hidden">
     <div class="overlay-content hint-overlay">
       <div class="overlay-tag" id="hint-overlay-tag">📖 TEORÍA</div>
@@ -358,6 +400,25 @@
       </div>
     </div>
   </div>
+
+  <!-- ======= OVERLAY: CHEATSHEET (modo modal) ======= -->
+  <div id="overlay-cheatsheet" class="overlay hidden">
+    <div class="overlay-content cheatsheet-overlay">
+      <div class="cheatsheet-header">
+        <span class="cheatsheet-title">📚 Cheatsheet</span>
+        <div class="cheatsheet-tabs">
+          <button class="cheat-tab active" data-cheat-tab-modal="api">API del juego</button>
+          <button class="cheat-tab" data-cheat-tab-modal="stdlib">Stdlib</button>
+          <button class="cheat-tab" data-cheat-tab-modal="syntax">Sintaxis Python</button>
+        </div>
+        <button class="cheat-close" id="cheatsheet-modal-close" title="Cerrar (Esc)">✕</button>
+      </div>
+      <div id="cheatsheet-modal-body" class="cheatsheet-body"></div>
+    </div>
+  </div>
+
+  <!-- ======= OVERLAY: TOOLTIP DE GLOSARIO ======= -->
+  <div id="glossary-tooltip" class="glossary-tooltip hidden" role="tooltip"></div>
 
   <!-- ======= OVERLAY: BRIEFING DE OPERACIÓN ======= -->
   <div id="overlay-intro" class="overlay hidden">
@@ -396,6 +457,7 @@
         <pre class="solution-code" id="solution-code"></pre>
       </div>
       <div class="overlay-buttons">
+        <button id="complete-stay" title="Cerrar este aviso y volver a examinar el terminal y tu código">📺 Revisar terminal</button>
         <button id="complete-replay">↺ Repetir</button>
         <button id="complete-menu">◀ Menú</button>
         <button id="complete-next" class="primary">Siguiente operación ▶</button>
@@ -458,6 +520,8 @@
 <script src="js/chapters.js"></script>
 <script src="js/levels.js"></script>
 <script src="js/theories.js"></script>
+<script src="js/cheatsheet.js"></script>
+<script src="js/glossary.js"></script>
 <script src="js/tutorial.js"></script>
 <script src="js/mocks.js"></script>
 <script src="js/network-map.js"></script>
