@@ -22,139 +22,139 @@
     <div class="menu-bg" aria-hidden="true">
       <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stop-color="#0a1220"/>
-            <stop offset="55%" stop-color="#070d18"/>
-            <stop offset="100%" stop-color="#04070f"/>
+          <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"  stop-color="#0a0e1f"/>
+            <stop offset="50%" stop-color="#04070f"/>
+            <stop offset="100%" stop-color="#020308"/>
           </linearGradient>
-          <radialGradient id="cityGlow" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0%"  stop-color="#7dd3fc" stop-opacity="0.30"/>
+          <linearGradient id="horizonGlow" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#7dd3fc" stop-opacity="0"/>
+            <stop offset="50%"  stop-color="#7dd3fc" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#7dd3fc" stop-opacity="0"/>
+          </linearGradient>
+          <radialGradient id="centerPulse" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%"   stop-color="#7dd3fc" stop-opacity="0.18"/>
             <stop offset="100%" stop-color="#7dd3fc" stop-opacity="0"/>
           </radialGradient>
-          <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
-            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#1a3050" stroke-width="0.5" stroke-opacity="0.5"/>
+          <pattern id="meshGrid" width="120" height="120" patternUnits="userSpaceOnUse">
+            <path d="M 120 0 L 0 0 0 120" fill="none" stroke="#1a3050" stroke-width="0.5" stroke-opacity="0.45"/>
           </pattern>
         </defs>
 
-        <!-- Fondo -->
-        <rect width="1920" height="1080" fill="url(#sky)"/>
-        <rect width="1920" height="1080" fill="url(#grid)" opacity="0.4"/>
+        <!-- Fondo base -->
+        <rect width="1920" height="1080" fill="url(#bg)"/>
+        <rect width="1920" height="1080" fill="url(#meshGrid)" opacity="0.35"/>
+        <ellipse cx="960" cy="540" rx="900" ry="380" fill="url(#centerPulse)"/>
 
-        <!-- Estrellas / data points -->
+        <!-- GRID 3D DE PERSPECTIVA (suelo digital, mitad inferior) -->
+        <g stroke="#7dd3fc" stroke-width="1">
+          <!-- Líneas verticales convergiendo al punto de fuga (960, 540) -->
+          <line x1="960" y1="540" x2="0"    y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="180"  y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="360"  y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="540"  y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="700"  y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="830"  y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="960"  y2="1080" stroke-opacity="0.30"/>
+          <line x1="960" y1="540" x2="1090" y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="1220" y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="1380" y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="1560" y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="1740" y2="1080" stroke-opacity="0.22"/>
+          <line x1="960" y1="540" x2="1920" y2="1080" stroke-opacity="0.22"/>
+          <!-- Líneas horizontales con espaciado logarítmico (más juntas cerca del horizonte) -->
+          <line x1="0" y1="585"  x2="1920" y2="585"  stroke-opacity="0.13"/>
+          <line x1="0" y1="635"  x2="1920" y2="635"  stroke-opacity="0.18"/>
+          <line x1="0" y1="700"  x2="1920" y2="700"  stroke-opacity="0.22"/>
+          <line x1="0" y1="780"  x2="1920" y2="780"  stroke-opacity="0.27"/>
+          <line x1="0" y1="880"  x2="1920" y2="880"  stroke-opacity="0.32"/>
+          <line x1="0" y1="1000" x2="1920" y2="1000" stroke-opacity="0.38"/>
+        </g>
+
+        <!-- Línea del horizonte con glow -->
+        <rect x="0" y="528" width="1920" height="24" fill="url(#horizonGlow)"/>
+        <line x1="0" y1="540" x2="1920" y2="540" stroke="#7dd3fc" stroke-width="1.2" opacity="0.7"/>
+
+        <!-- NETWORK MESH (mitad superior — nodos conectados) -->
+        <g stroke="#7dd3fc" stroke-width="0.6" fill="none" opacity="0.32">
+          <line x1="180"  y1="120" x2="380"  y2="200"/>
+          <line x1="380"  y1="200" x2="600"  y2="160"/>
+          <line x1="600"  y1="160" x2="850"  y2="240"/>
+          <line x1="850"  y1="240" x2="1100" y2="180"/>
+          <line x1="1100" y1="180" x2="1320" y2="280"/>
+          <line x1="1320" y1="280" x2="1600" y2="220"/>
+          <line x1="1600" y1="220" x2="1820" y2="320"/>
+          <line x1="180"  y1="120" x2="280"  y2="380"/>
+          <line x1="380"  y1="200" x2="600"  y2="380"/>
+          <line x1="600"  y1="160" x2="600"  y2="380"/>
+          <line x1="850"  y1="240" x2="1100" y2="380"/>
+          <line x1="1320" y1="280" x2="1100" y2="380"/>
+          <line x1="280"  y1="380" x2="600"  y2="380"/>
+          <line x1="600"  y1="380" x2="1100" y2="380"/>
+          <line x1="1100" y1="380" x2="1500" y2="420"/>
+          <line x1="1500" y1="420" x2="1820" y2="320"/>
+          <line x1="1500" y1="420" x2="1320" y2="280"/>
+        </g>
+
+        <!-- Nodos del mesh -->
         <g fill="#7dd3fc">
-          <circle cx="120"  cy="120" r="0.8" opacity="0.7"/>
-          <circle cx="280"  cy="80"  r="0.6" opacity="0.5"/>
-          <circle cx="450"  cy="150" r="0.9" opacity="0.7"/>
-          <circle cx="600"  cy="80"  r="0.6" opacity="0.5"/>
-          <circle cx="780"  cy="180" r="0.8" opacity="0.6"/>
-          <circle cx="950"  cy="100" r="0.6" opacity="0.5"/>
-          <circle cx="1100" cy="160" r="0.9" opacity="0.7"/>
-          <circle cx="1280" cy="80"  r="0.7" opacity="0.6"/>
-          <circle cx="1480" cy="180" r="0.8" opacity="0.6"/>
-          <circle cx="1700" cy="100" r="0.6" opacity="0.5"/>
-          <circle cx="1850" cy="200" r="0.9" opacity="0.7"/>
+          <circle cx="180"  cy="120" r="2.5" opacity="0.7"/>
+          <circle cx="380"  cy="200" r="2"   opacity="0.6"/>
+          <circle cx="600"  cy="160" r="3"   opacity="0.85"/>
+          <circle cx="850"  cy="240" r="2"   opacity="0.6"/>
+          <circle cx="1100" cy="180" r="2.5" opacity="0.7"/>
+          <circle cx="1320" cy="280" r="2"   opacity="0.6"/>
+          <circle cx="1600" cy="220" r="2.5" opacity="0.7"/>
+          <circle cx="1820" cy="320" r="2"   opacity="0.6"/>
+          <circle cx="280"  cy="380" r="2"   opacity="0.55"/>
+          <circle cx="600"  cy="380" r="3"   opacity="0.8"/>
+          <circle cx="1100" cy="380" r="3.5" opacity="0.9"/>
+          <circle cx="1500" cy="420" r="2"   opacity="0.6"/>
         </g>
 
-        <!-- Glow de fondo cyan / corporativo -->
-        <ellipse cx="960" cy="700" rx="900" ry="200" fill="url(#cityGlow)"/>
-
-        <!-- Skyline corporativo (siluetas de edificios) -->
-        <g fill="#040608">
-          <rect x="100"  y="700" width="80"  height="280"/>
-          <rect x="195"  y="650" width="60"  height="330"/>
-          <rect x="270"  y="720" width="100" height="260"/>
-          <rect x="385"  y="600" width="70"  height="380"/>
-          <rect x="470"  y="680" width="90"  height="300"/>
-          <rect x="575"  y="640" width="50"  height="340"/>
-          <rect x="640"  y="700" width="120" height="280"/>
-          <rect x="775"  y="580" width="80"  height="400"/>
-          <rect x="870"  y="660" width="60"  height="320"/>
-          <rect x="945"  y="540" width="100" height="440"/>
-          <rect x="1060" y="620" width="70"  height="360"/>
-          <rect x="1145" y="680" width="90"  height="300"/>
-          <rect x="1250" y="600" width="80"  height="380"/>
-          <rect x="1345" y="660" width="60"  height="320"/>
-          <rect x="1420" y="700" width="110" height="280"/>
-          <rect x="1545" y="640" width="70"  height="340"/>
-          <rect x="1630" y="700" width="90"  height="280"/>
-          <rect x="1735" y="660" width="60"  height="320"/>
-          <rect x="1810" y="720" width="80"  height="260"/>
+        <!-- 3 nodos pulsantes (anillos animados) -->
+        <g fill="none" stroke="#7dd3fc" stroke-width="1">
+          <circle cx="600" cy="160" r="6" opacity="0.45">
+            <animate attributeName="r" values="4;14;4" dur="3s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="1100" cy="380" r="6" opacity="0.45">
+            <animate attributeName="r" values="4;16;4" dur="4.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.55;0;0.55" dur="4.2s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="1820" cy="320" r="5" opacity="0.45">
+            <animate attributeName="r" values="3;12;3" dur="2.6s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.5;0;0.5" dur="2.6s" repeatCount="indefinite"/>
+          </circle>
         </g>
 
-        <!-- Antenas / mástiles -->
-        <g stroke="#0a1220" stroke-width="2" fill="none">
-          <line x1="425" y1="600" x2="425" y2="540"/>
-          <line x1="815" y1="580" x2="815" y2="510"/>
-          <line x1="995" y1="540" x2="995" y2="460"/>
-          <line x1="1290" y1="600" x2="1290" y2="530"/>
-        </g>
-
-        <!-- Ventanas iluminadas (filas) -->
+        <!-- Data points dispersos (estrellas/píxeles) -->
         <g fill="#7dd3fc">
-          <rect x="115" y="730" width="6" height="10" opacity="0.55"/>
-          <rect x="135" y="730" width="6" height="10" opacity="0.40"/>
-          <rect x="155" y="730" width="6" height="10" opacity="0.65"/>
-          <rect x="115" y="760" width="6" height="10" opacity="0.40"/>
-          <rect x="155" y="760" width="6" height="10" opacity="0.55"/>
-          <rect x="115" y="790" width="6" height="10" opacity="0.55"/>
-          <rect x="135" y="790" width="6" height="10" opacity="0.65"/>
-
-          <rect x="200" y="680" width="6" height="10" opacity="0.55"/>
-          <rect x="220" y="680" width="6" height="10" opacity="0.40"/>
-          <rect x="240" y="680" width="6" height="10" opacity="0.55"/>
-          <rect x="200" y="720" width="6" height="10" opacity="0.65"/>
-          <rect x="240" y="720" width="6" height="10" opacity="0.55"/>
-
-          <rect x="395" y="640" width="6" height="10" opacity="0.65"/>
-          <rect x="415" y="640" width="6" height="10" opacity="0.40"/>
-          <rect x="435" y="640" width="6" height="10" opacity="0.55"/>
-          <rect x="395" y="680" width="6" height="10" opacity="0.55"/>
-          <rect x="435" y="680" width="6" height="10" opacity="0.65"/>
-
-          <rect x="785" y="610" width="6" height="10" opacity="0.65"/>
-          <rect x="805" y="610" width="6" height="10" opacity="0.40"/>
-          <rect x="825" y="610" width="6" height="10" opacity="0.55"/>
-          <rect x="845" y="610" width="6" height="10" opacity="0.55"/>
-          <rect x="785" y="650" width="6" height="10" opacity="0.40"/>
-          <rect x="825" y="650" width="6" height="10" opacity="0.65"/>
-
-          <rect x="955" y="580" width="6" height="10" opacity="0.65"/>
-          <rect x="975" y="580" width="6" height="10" opacity="0.55"/>
-          <rect x="995" y="580" width="6" height="10" opacity="0.40"/>
-          <rect x="1015" y="580" width="6" height="10" opacity="0.65"/>
-          <rect x="1035" y="580" width="6" height="10" opacity="0.40"/>
-          <rect x="955" y="620" width="6" height="10" opacity="0.55"/>
-          <rect x="995" y="620" width="6" height="10" opacity="0.65"/>
-          <rect x="1035" y="620" width="6" height="10" opacity="0.55"/>
-
-          <rect x="1260" y="640" width="6" height="10" opacity="0.65"/>
-          <rect x="1280" y="640" width="6" height="10" opacity="0.40"/>
-          <rect x="1300" y="640" width="6" height="10" opacity="0.55"/>
-          <rect x="1320" y="640" width="6" height="10" opacity="0.55"/>
-          <rect x="1260" y="680" width="6" height="10" opacity="0.40"/>
-          <rect x="1300" y="680" width="6" height="10" opacity="0.65"/>
-
-          <rect x="1430" y="730" width="6" height="10" opacity="0.55"/>
-          <rect x="1450" y="730" width="6" height="10" opacity="0.65"/>
-          <rect x="1480" y="730" width="6" height="10" opacity="0.40"/>
-          <rect x="1510" y="730" width="6" height="10" opacity="0.55"/>
-
-          <rect x="1740" y="690" width="6" height="10" opacity="0.55"/>
-          <rect x="1760" y="690" width="6" height="10" opacity="0.65"/>
-          <rect x="1780" y="690" width="6" height="10" opacity="0.40"/>
+          <circle cx="120"  cy="80"  r="0.8" opacity="0.6"/>
+          <circle cx="450"  cy="60"  r="0.6" opacity="0.4"/>
+          <circle cx="780"  cy="100" r="0.7" opacity="0.5"/>
+          <circle cx="1260" cy="80"  r="0.8" opacity="0.55"/>
+          <circle cx="1700" cy="120" r="0.6" opacity="0.4"/>
+          <circle cx="320"  cy="320" r="0.5" opacity="0.45"/>
+          <circle cx="780"  cy="440" r="0.6" opacity="0.5"/>
+          <circle cx="1450" cy="350" r="0.7" opacity="0.5"/>
+          <circle cx="1880" cy="180" r="0.5" opacity="0.4"/>
+          <circle cx="50"   cy="240" r="0.6" opacity="0.4"/>
+          <circle cx="900"  cy="60"  r="0.7" opacity="0.5"/>
+          <circle cx="1500" cy="100" r="0.6" opacity="0.45"/>
         </g>
 
-        <!-- Líneas de comunicación / red entre edificios -->
-        <g stroke="#7dd3fc" stroke-width="0.8" fill="none" opacity="0.35" stroke-dasharray="4 6">
-          <path d="M 425 540 Q 700 350 815 510"/>
-          <path d="M 815 510 Q 900 360 995 460"/>
-          <path d="M 995 460 Q 1140 380 1290 530"/>
-        </g>
-        <g fill="#7dd3fc">
-          <circle cx="425" cy="540" r="3" opacity="0.6"/>
-          <circle cx="815" cy="510" r="3" opacity="0.6"/>
-          <circle cx="995" cy="460" r="3.5" opacity="0.7"/>
-          <circle cx="1290" cy="530" r="3" opacity="0.6"/>
+        <!-- Hex codes flotantes en el horizonte (sutil) -->
+        <g fill="#7dd3fc" opacity="0.10" font-family="monospace" font-size="11">
+          <text x="80"   y="510">0xFE2A</text>
+          <text x="280"  y="515">0x91C4</text>
+          <text x="490"  y="510">0x4D17</text>
+          <text x="700"  y="515">0xA88B</text>
+          <text x="980"  y="510">0xFFEE</text>
+          <text x="1180" y="515">0x4202</text>
+          <text x="1390" y="510">0x9D33</text>
+          <text x="1620" y="515">0x07BC</text>
+          <text x="1820" y="510">0xB1A0</text>
         </g>
       </svg>
     </div>
