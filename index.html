@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PyHack — Python ofensivo desde cero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.v7.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/dracula.min.css">
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ======= MENÚ PRINCIPAL ======= -->
+  <section id="screen-menu" class="screen active">
+    <div class="menu-bg" aria-hidden="true">
+      <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"  stop-color="#0a1220"/>
+            <stop offset="55%" stop-color="#070d18"/>
+            <stop offset="100%" stop-color="#04070f"/>
+          </linearGradient>
+          <radialGradient id="cityGlow" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%"  stop-color="#7dd3fc" stop-opacity="0.30"/>
+            <stop offset="100%" stop-color="#7dd3fc" stop-opacity="0"/>
+          </radialGradient>
+          <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#1a3050" stroke-width="0.5" stroke-opacity="0.5"/>
+          </pattern>
+        </defs>
+
+        <!-- Fondo -->
+        <rect width="1920" height="1080" fill="url(#sky)"/>
+        <rect width="1920" height="1080" fill="url(#grid)" opacity="0.4"/>
+
+        <!-- Estrellas / data points -->
+        <g fill="#7dd3fc">
+          <circle cx="120"  cy="120" r="0.8" opacity="0.7"/>
+          <circle cx="280"  cy="80"  r="0.6" opacity="0.5"/>
+          <circle cx="450"  cy="150" r="0.9" opacity="0.7"/>
+          <circle cx="600"  cy="80"  r="0.6" opacity="0.5"/>
+          <circle cx="780"  cy="180" r="0.8" opacity="0.6"/>
+          <circle cx="950"  cy="100" r="0.6" opacity="0.5"/>
+          <circle cx="1100" cy="160" r="0.9" opacity="0.7"/>
+          <circle cx="1280" cy="80"  r="0.7" opacity="0.6"/>
+          <circle cx="1480" cy="180" r="0.8" opacity="0.6"/>
+          <circle cx="1700" cy="100" r="0.6" opacity="0.5"/>
+          <circle cx="1850" cy="200" r="0.9" opacity="0.7"/>
+        </g>
+
+        <!-- Glow de fondo cyan / corporativo -->
+        <ellipse cx="960" cy="700" rx="900" ry="200" fill="url(#cityGlow)"/>
+
+        <!-- Skyline corporativo (siluetas de edificios) -->
+        <g fill="#040608">
+          <rect x="100"  y="700" width="80"  height="280"/>
+          <rect x="195"  y="650" width="60"  height="330"/>
+          <rect x="270"  y="720" width="100" height="260"/>
+          <rect x="385"  y="600" width="70"  height="380"/>
+          <rect x="470"  y="680" width="90"  height="300"/>
+          <rect x="575"  y="640" width="50"  height="340"/>
+          <rect x="640"  y="700" width="120" height="280"/>
+          <rect x="775"  y="580" width="80"  height="400"/>
+          <rect x="870"  y="660" width="60"  height="320"/>
+          <rect x="945"  y="540" width="100" height="440"/>
+          <rect x="1060" y="620" width="70"  height="360"/>
+          <rect x="1145" y="680" width="90"  height="300"/>
+          <rect x="1250" y="600" width="80"  height="380"/>
+          <rect x="1345" y="660" width="60"  height="320"/>
+          <rect x="1420" y="700" width="110" height="280"/>
+          <rect x="1545" y="640" width="70"  height="340"/>
+          <rect x="1630" y="700" width="90"  height="280"/>
+          <rect x="1735" y="660" width="60"  height="320"/>
+          <rect x="1810" y="720" width="80"  height="260"/>
+        </g>
+
+        <!-- Antenas / mástiles -->
+        <g stroke="#0a1220" stroke-width="2" fill="none">
+          <line x1="425" y1="600" x2="425" y2="540"/>
+          <line x1="815" y1="580" x2="815" y2="510"/>
+          <line x1="995" y1="540" x2="995" y2="460"/>
+          <line x1="1290" y1="600" x2="1290" y2="530"/>
+        </g>
+
+        <!-- Ventanas iluminadas (filas) -->
+        <g fill="#7dd3fc">
+          <rect x="115" y="730" width="6" height="10" opacity="0.55"/>
+          <rect x="135" y="730" width="6" height="10" opacity="0.40"/>
+          <rect x="155" y="730" width="6" height="10" opacity="0.65"/>
+          <rect x="115" y="760" width="6" height="10" opacity="0.40"/>
+          <rect x="155" y="760" width="6" height="10" opacity="0.55"/>
+          <rect x="115" y="790" width="6" height="10" opacity="0.55"/>
+          <rect x="135" y="790" width="6" height="10" opacity="0.65"/>
+
+          <rect x="200" y="680" width="6" height="10" opacity="0.55"/>
+          <rect x="220" y="680" width="6" height="10" opacity="0.40"/>
+          <rect x="240" y="680" width="6" height="10" opacity="0.55"/>
+          <rect x="200" y="720" width="6" height="10" opacity="0.65"/>
+          <rect x="240" y="720" width="6" height="10" opacity="0.55"/>
+
+          <rect x="395" y="640" width="6" height="10" opacity="0.65"/>
+          <rect x="415" y="640" width="6" height="10" opacity="0.40"/>
+          <rect x="435" y="640" width="6" height="10" opacity="0.55"/>
+          <rect x="395" y="680" width="6" height="10" opacity="0.55"/>
+          <rect x="435" y="680" width="6" height="10" opacity="0.65"/>
+
+          <rect x="785" y="610" width="6" height="10" opacity="0.65"/>
+          <rect x="805" y="610" width="6" height="10" opacity="0.40"/>
+          <rect x="825" y="610" width="6" height="10" opacity="0.55"/>
+          <rect x="845" y="610" width="6" height="10" opacity="0.55"/>
+          <rect x="785" y="650" width="6" height="10" opacity="0.40"/>
+          <rect x="825" y="650" width="6" height="10" opacity="0.65"/>
+
+          <rect x="955" y="580" width="6" height="10" opacity="0.65"/>
+          <rect x="975" y="580" width="6" height="10" opacity="0.55"/>
+          <rect x="995" y="580" width="6" height="10" opacity="0.40"/>
+          <rect x="1015" y="580" width="6" height="10" opacity="0.65"/>
+          <rect x="1035" y="580" width="6" height="10" opacity="0.40"/>
+          <rect x="955" y="620" width="6" height="10" opacity="0.55"/>
+          <rect x="995" y="620" width="6" height="10" opacity="0.65"/>
+          <rect x="1035" y="620" width="6" height="10" opacity="0.55"/>
+
+          <rect x="1260" y="640" width="6" height="10" opacity="0.65"/>
+          <rect x="1280" y="640" width="6" height="10" opacity="0.40"/>
+          <rect x="1300" y="640" width="6" height="10" opacity="0.55"/>
+          <rect x="1320" y="640" width="6" height="10" opacity="0.55"/>
+          <rect x="1260" y="680" width="6" height="10" opacity="0.40"/>
+          <rect x="1300" y="680" width="6" height="10" opacity="0.65"/>
+
+          <rect x="1430" y="730" width="6" height="10" opacity="0.55"/>
+          <rect x="1450" y="730" width="6" height="10" opacity="0.65"/>
+          <rect x="1480" y="730" width="6" height="10" opacity="0.40"/>
+          <rect x="1510" y="730" width="6" height="10" opacity="0.55"/>
+
+          <rect x="1740" y="690" width="6" height="10" opacity="0.55"/>
+          <rect x="1760" y="690" width="6" height="10" opacity="0.65"/>
+          <rect x="1780" y="690" width="6" height="10" opacity="0.40"/>
+        </g>
+
+        <!-- Líneas de comunicación / red entre edificios -->
+        <g stroke="#7dd3fc" stroke-width="0.8" fill="none" opacity="0.35" stroke-dasharray="4 6">
+          <path d="M 425 540 Q 700 350 815 510"/>
+          <path d="M 815 510 Q 900 360 995 460"/>
+          <path d="M 995 460 Q 1140 380 1290 530"/>
+        </g>
+        <g fill="#7dd3fc">
+          <circle cx="425" cy="540" r="3" opacity="0.6"/>
+          <circle cx="815" cy="510" r="3" opacity="0.6"/>
+          <circle cx="995" cy="460" r="3.5" opacity="0.7"/>
+          <circle cx="1290" cy="530" r="3" opacity="0.6"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="menu-container">
+      <header class="menu-header">
+        <h1 class="menu-title">PyHack</h1>
+        <p class="menu-subtitle">Python ofensivo desde cero · Sentinel Labs</p>
+      </header>
+
+      <div class="menu-grid">
+        <aside class="menu-lore">
+          <div class="lore-tag">EXPEDIENTE / OPERATIVO #SL-2074</div>
+          <p>
+            Bienvenido a <strong>Sentinel Labs</strong>, firma de seguridad ofensiva.
+            En tus seis primeras semanas serás <em>analista junior</em> bajo
+            supervisión: laboratorios autorizados, código que obedece reglas, ética
+            que no se discute.
+          </p>
+          <p>
+            Tu mentora — <strong>Iris Vega</strong>, 10 años en la industria — te
+            asignará operaciones graduadas. Cada una resuelta con Python (y algo
+            de Bash en su momento).
+          </p>
+          <p class="lore-disclaimer">
+            Todos los objetivos del juego son sistemas simulados. Aplicar estas
+            técnicas contra sistemas reales sin autorización escrita es ilegal.
+          </p>
+        </aside>
+
+        <nav class="menu-actions">
+          <button class="menu-btn primary" id="btn-play">
+            ▶ <span id="play-label">Empezar entrenamiento</span>
+          </button>
+          <div class="menu-secondary-grid">
+            <button class="menu-btn" id="btn-tutorial">📚 Manual técnico</button>
+            <button class="menu-btn" id="btn-howto">❓ Cómo opera Sentinel</button>
+            <button class="menu-btn" id="btn-levelselect">🎯 Operaciones</button>
+            <button class="menu-btn" id="btn-diary">📋 Bitácora</button>
+            <button class="menu-btn" id="btn-story">📖 Briefing completo</button>
+          </div>
+        </nav>
+      </div>
+
+      <footer class="menu-footer">
+        <div class="menu-footer-row">
+          <span class="menu-progress">Progreso: <strong id="menu-progress-text">0 / 50</strong></span>
+          <span class="menu-adventures" id="menu-adventures"></span>
+          <div class="menu-medals" id="menu-medals" title="Insignias de exámenes superados"></div>
+        </div>
+        <div class="menu-footer-actions">
+          <button class="menu-btn-mini" id="btn-new-adventure" title="Nueva ronda de formación (mantiene insignias)">
+            🔄 Nueva ronda
+          </button>
+          <span class="menu-status" id="menu-status-msg">Inicializando entorno Python…</span>
+        </div>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ======= MANUAL TÉCNICO (TUTORIAL) ======= -->
+  <section id="screen-tutorial" class="screen">
+    <header class="screen-header">
+      <button class="back-btn" data-back>◀ Menú</button>
+      <h2>📚 Manual técnico</h2>
+    </header>
+    <div class="tutorial-layout">
+      <aside id="tutorial-toc"></aside>
+      <article id="tutorial-content"></article>
+    </div>
+  </section>
+
+  <!-- ======= CÓMO JUGAR ======= -->
+  <section id="screen-howto" class="screen">
+    <header class="screen-header">
+      <button class="back-btn" data-back>◀ Menú</button>
+      <h2>❓ Cómo opera Sentinel</h2>
+    </header>
+    <div id="howto-content" class="readable"></div>
+  </section>
+
+  <!-- ======= OPERACIONES (LEVEL SELECT) ======= -->
+  <section id="screen-levelselect" class="screen">
+    <header class="screen-header">
+      <button class="back-btn" data-back>◀ Menú</button>
+      <h2>🎯 Operaciones disponibles</h2>
+    </header>
+    <div id="levelselect-grid"></div>
+  </section>
+
+  <!-- ======= BITÁCORA (DIARIO) ======= -->
+  <section id="screen-diary" class="screen">
+    <header class="screen-header">
+      <button class="back-btn" data-back>◀ Menú</button>
+      <h2>📋 Bitácora del operativo</h2>
+    </header>
+    <div id="diary-content" class="readable"></div>
+  </section>
+
+  <!-- ======= BRIEFING COMPLETO (HISTORIA) ======= -->
+  <section id="screen-story" class="screen">
+    <header class="screen-header">
+      <button class="back-btn" data-back>◀ Menú</button>
+      <h2>📖 Briefing completo</h2>
+    </header>
+    <div id="story-content" class="readable"></div>
+  </section>
+
+  <!-- ======= JUEGO ======= -->
+  <section id="screen-game" class="screen">
+    <header>
+      <button class="back-btn" id="game-menu-btn">◀ Menú</button>
+      <h1>SENTINEL.LAB</h1>
+      <div id="level-info">
+        <span class="lvl-badge">OP-<span id="level-num">01</span></span>
+        <span id="level-title">…</span>
+        <span id="level-location" class="lvl-location"></span>
+      </div>
+      <div id="game-stats" title="Cover, items, teoría">
+        <div id="lives-display" class="lives" title="Cover meter — cada error de Python te quema un poco"></div>
+        <button id="potion-btn" class="potion-btn" title="Usar VPN burner (recupera cover)" disabled>
+          <span class="potion-icon">🛡</span>
+          <span id="potion-count">0</span>
+        </button>
+        <button id="lives-toggle-btn" class="theory-toggle-btn" title="Activar/desactivar el cover meter">
+          <span>❤</span><span id="lives-state">ON</span>
+        </button>
+        <button id="theory-toggle-btn" class="theory-toggle-btn" title="Mostrar/ocultar teoría tras cada operación">
+          <span class="theory-icon">📖</span>
+          <span id="theory-state">ON</span>
+        </button>
+      </div>
+      <div id="level-nav">
+        <button id="prev-level" title="Operación anterior">◀</button>
+        <button id="next-level" title="Operación siguiente">▶</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="left-panel">
+        <div id="mission">
+          <h2>Briefing</h2>
+          <p id="mission-text">…</p>
+          <h3>Concepto</h3>
+          <div id="concept-pill" class="pill"></div>
+          <h3>Ayuda
+            <button id="theory-hint-btn" class="mini-btn">📖 teoría</button>
+            <button id="hint-toggle" class="mini-btn">💡 código</button>
+          </h3>
+          <p class="help-note">La teoría y la pista de código se abren en una ventana aparte para leerlas a tamaño cómodo.</p>
+        </div>
+        <div id="restrictions-panel" class="hidden">
+          <h3>⚠ Reglas del examen</h3>
+          <ul id="restrictions-list"></ul>
+        </div>
+        <div class="splitter splitter-h" id="splitter-mission" title="Arrastra para redimensionar"></div>
+        <div id="editor-wrap">
+          <textarea id="code-editor"></textarea>
+        </div>
+        <div id="controls">
+          <button id="run-btn" disabled>▶ Ejecutar</button>
+          <button id="reset-btn" title="Volver al template inicial">↺ Reset</button>
+        </div>
+      </section>
+
+      <div class="splitter splitter-v" id="splitter-lr" title="Arrastra para redimensionar"></div>
+
+      <section id="right-panel">
+        <div id="netmap-panel">
+          <div class="panel-header">
+            <span class="panel-title">▸ MAPA DE RED</span>
+            <span class="panel-status" id="netmap-status">— sin objetivos cargados —</span>
+          </div>
+          <div id="netmap" class="netmap"></div>
+        </div>
+        <div class="splitter splitter-h" id="splitter-netmap" title="Arrastra para redimensionar"></div>
+        <div id="terminal-panel">
+          <div class="panel-header">
+            <span class="panel-title">▸ TERMINAL</span>
+            <span class="panel-status">python3 sentinel.py</span>
+          </div>
+          <div id="terminal" class="terminal">
+            <div id="terminal-output"></div>
+          </div>
+        </div>
+        <div id="status-bar">
+          <span id="status-msg">Listo.</span>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <!-- ======= OVERLAY: AYUDA (teoría / código) ======= -->
+  <div id="overlay-hint" class="overlay hidden">
+    <div class="overlay-content hint-overlay">
+      <div class="overlay-tag" id="hint-overlay-tag">📖 TEORÍA</div>
+      <h2 id="hint-overlay-title">…</h2>
+      <div class="hint-overlay-body" id="hint-overlay-body"></div>
+      <div class="overlay-buttons">
+        <button id="hint-overlay-close" class="primary">Cerrar (Esc / Enter)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= OVERLAY: BRIEFING DE OPERACIÓN ======= -->
+  <div id="overlay-intro" class="overlay hidden">
+    <div class="overlay-content">
+      <div class="overlay-tag" id="intro-location"></div>
+      <h2 id="intro-title"></h2>
+      <p id="intro-story" class="story-text"></p>
+      <div class="intro-meta">
+        <div><strong>Objetivo:</strong> <span id="intro-mission"></span></div>
+        <div><strong>Concepto técnico:</strong> <span id="intro-concept"></span></div>
+      </div>
+      <button id="intro-start" class="primary">Aceptar misión</button>
+    </div>
+  </div>
+
+  <!-- ======= OVERLAY: OPERACIÓN COMPLETADA ======= -->
+  <div id="overlay-complete" class="overlay hidden">
+    <div class="overlay-content">
+      <h2 id="complete-title">✓ Operación completada</h2>
+      <p class="concept-learned">
+        Has aplicado: <span id="complete-concept" class="pill"></span>
+      </p>
+      <div class="theory-block" id="complete-theory">
+        <h3 class="theory-heading">📖 Teoría — <span id="theory-title">…</span></h3>
+        <div class="theory-body" id="theory-body"></div>
+        <label class="theory-toggle-inline">
+          <input type="checkbox" id="theory-disable-checkbox">
+          <span>No mostrar teoría tras cada operación</span>
+        </label>
+      </div>
+      <div class="solution-block" id="complete-solution">
+        <button class="solution-toggle" id="solution-toggle" type="button">
+          <span class="solution-arrow">▸</span>
+          <span>Ver solución de referencia</span>
+        </button>
+        <pre class="solution-code" id="solution-code"></pre>
+      </div>
+      <div class="overlay-buttons">
+        <button id="complete-replay">↺ Repetir</button>
+        <button id="complete-menu">◀ Menú</button>
+        <button id="complete-next" class="primary">Siguiente operación ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= OVERLAY: GAME OVER (cover blown) ======= -->
+  <div id="overlay-gameover" class="overlay hidden">
+    <div class="overlay-content gameover">
+      <div class="overlay-tag" style="background:#f87171; color:#240b0b;">✗ COVER COMPROMETIDO</div>
+      <h2>Te han detectado</h2>
+      <p class="story-text">
+        Demasiados errores ruidosos. El SOC del cliente ha levantado alertas y tu
+        cover en este operativo está quemado. Iris te aparta del campo y te envía
+        de vuelta al último <em>checkpoint seguro</em>.
+      </p>
+      <p id="gameover-checkpoint" style="margin-bottom: 18px;"></p>
+      <button id="gameover-continue" class="primary">Volver al checkpoint</button>
+    </div>
+  </div>
+
+  <!-- ======= OVERLAY: EXAMEN INTRO ======= -->
+  <div id="overlay-exam-intro" class="overlay hidden">
+    <div class="overlay-content exam-intro">
+      <div class="overlay-tag exam">⚠ EVALUACIÓN INTERNA</div>
+      <h2 id="exam-title"></h2>
+      <p id="exam-story" class="story-text"></p>
+      <div class="exam-rules">
+        <h3>Restricciones de la evaluación:</h3>
+        <ul id="exam-rules-list"></ul>
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+        Sin pista. Sin teoría previa. Cada error compromete tu cover. Aprobar
+        recupera y aumenta tu límite, además de otorgarte una insignia.
+      </p>
+      <button id="exam-start" class="primary">Aceptar evaluación</button>
+    </div>
+  </div>
+
+  <!-- ======= OVERLAY: VICTORIA FINAL ======= -->
+  <div id="overlay-victory" class="overlay hidden">
+    <div class="overlay-content victory">
+      <h2>🏆 Operativo Sentinel certificado</h2>
+      <p class="story-text">
+        Has completado las seis semanas de formación y la operación final contra
+        Caldera. Iris firma tu informe: <em>«Listo para campo. Recomendado.»</em>
+        Acabas de cruzar la frontera entre estudiar Python y aplicarlo. Lo que
+        viene a partir de aquí, en pentesting de verdad, ya depende de ti.
+      </p>
+      <div class="overlay-buttons">
+        <button id="victory-menu">Volver al menú</button>
+        <button id="victory-restart" class="primary">🔄 Nueva ronda</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/chapters.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/theories.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/mocks.js"></script>
+<script src="js/network-map.js"></script>
+<script src="js/terminal.js"></script>
+<script src="js/game.js"></script>
+<script src="js/runner.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
