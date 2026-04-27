@@ -79,7 +79,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (currentLevel > 0) loadLevelByIndex(currentLevel - 1, false);
   });
   document.getElementById('next-level').addEventListener('click', () => {
-    if (currentLevel < LEVELS.length - 1) loadLevelByIndex(currentLevel + 1, false);
+    if (currentLevel >= LEVELS.length - 1) return;
+    const max = parseInt(localStorage.getItem(STORAGE.maxLevel) || '0', 10);
+    const targetIdx = currentLevel + 1;
+    if (targetIdx > max) {
+      log('Esa operación está bloqueada. Completa la actual primero.', 'err');
+      return;
+    }
+    loadLevelByIndex(targetIdx, false);
   });
 
   document.getElementById('hint-toggle').addEventListener('click', () => openHintOverlay('code'));
@@ -511,8 +518,14 @@ function loadLevelByIndex(idx, showIntro = false) {
   log(`Operación ${String(lvl.id).padStart(2, '0')}: ${lvl.title}`, 'info');
   log(`Lugar: ${lvl.location}`, 'log');
 
+  const maxCompleted = parseInt(localStorage.getItem(STORAGE.maxLevel) || '0', 10);
   document.getElementById('prev-level').disabled = (idx === 0);
-  document.getElementById('next-level').disabled = (idx === LEVELS.length - 1);
+  document.getElementById('next-level').disabled =
+    (idx === LEVELS.length - 1) || (idx + 1 > maxCompleted);
+  document.getElementById('next-level').title =
+    (idx + 1 > maxCompleted)
+      ? 'Bloqueada — completa esta operación primero'
+      : 'Operación siguiente';
 
   localStorage.setItem(STORAGE.lastLevel, String(idx));
 
