@@ -172,6 +172,6 @@ Pulls bienvenidos para:
 
 ## Inspirado por
 
-- La idea visual de [CodeCombat](https://codecombat.com/) — programar como mecánica central de un juego.
+
 - La forma de [HackTheBox](https://www.hackthebox.com/), [TryHackMe](https://tryhackme.com/) y los retos CTF en general — escenarios autorizados sobre infraestructura ficticia.
 - Los recursos clásicos del campo (libros, labs, certificaciones) para guiar el orden de los conceptos enseñados.
