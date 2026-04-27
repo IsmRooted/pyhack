@@ -1,0 +1,16 @@
+# Permitir issues en blanco aparte de las plantillas (no fuerza a usarlas).
+# Si en algún momento prefieres forzar las plantillas, cambia a `false`.
+blank_issues_enabled: true
+
+# Links de "ayúdate antes de abrir un issue" que aparecen junto a los botones
+# de plantillas en la pantalla de "New Issue".
+contact_links:
+  - name: 📋 Política editorial / criterios de seguridad
+    url: https://github.com/IsmRooted/pyhack/blob/main/SECURITY.md
+    about: Lee esto antes de proponer un nivel nuevo o cambiar framing pedagógico. Define qué tipo de contenido se acepta.
+  - name: 📚 Cómo contribuir (CONTRIBUTING)
+    url: https://github.com/IsmRooted/pyhack/blob/main/CONTRIBUTING.md
+    about: Cómo desarrollar localmente, qué validar antes de hacer commit, convenciones de estilo.
+  - name: 🎯 ¿Solo quieres jugar?
+    url: https://IsmRooted.github.io/pyhack/
+    about: La versión online de PyHack — no necesitas issue para esto, abre el link y juega.
