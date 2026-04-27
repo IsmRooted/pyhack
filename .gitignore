@@ -6,6 +6,9 @@ desktop.ini
 # Editores
 .vscode/
 .idea/
+.history/
+.cursor/
+.aider*
 *.swp
 *.swo
 *~
