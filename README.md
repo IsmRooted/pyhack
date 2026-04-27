@@ -130,6 +130,5 @@ PyHack está diseñado para que **escribas tú el código**, no para copiar:
 
 ## Inspirado por
 
-- La idea visual de [CodeCombat](https://codecombat.com/) — programar como mecánica central de un juego.
 - La forma de pentesting de [HackTheBox](https://www.hackthebox.com/), [TryHackMe](https://tryhackme.com/) y los retos CTF en general.
 - Los recursos clásicos del campo (libros, labs, certificaciones) para guiar el orden de los conceptos enseñados.
