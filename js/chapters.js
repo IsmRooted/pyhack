@@ -28,9 +28,9 @@ const CHAPTERS = [
   },
   {
     id: 4,
-    title: "Web Hacking II",
-    subtitle: "Vulnerabilidades clásicas (educativo)",
-    summary: "SQLi, XSS, traversal. Las fallas que han marcado dos décadas — contra labs simulados.",
+    title: "Defensa de aplicaciones web",
+    subtitle: "Validar input, auditar logs, endurecer headers",
+    summary: "El otro lado del SQLi y del XSS: cómo se escribe el código que NO cae. Validación, parsing de logs y reporting de hallazgos.",
   },
   {
     id: 5,
@@ -46,14 +46,20 @@ const CHAPTERS = [
   },
   {
     id: 7,
-    title: "Post-explotación + Bash",
-    subtitle: "Una vez dentro: enumerar, persistir, exfiltrar",
-    summary: "subprocess, bash básico, scripts encadenados. La vida después del exploit.",
+    title: "Forense y respuesta a incidentes",
+    subtitle: "Triage, hashing y timeline en un host bajo investigación",
+    summary: "subprocess, bash básico, scripts encadenados — desde el lado del que llega después y reconstruye lo que pasó.",
   },
   {
     id: 8,
     title: "Operación Caldera",
-    subtitle: "Final: aplicar todo lo aprendido",
-    summary: "Una APT hostil ataca a un cliente real. No es laboratorio. Demuestras lo que sabes.",
+    subtitle: "Final: respuesta a un APT en un cliente real",
+    summary: "Un APT hostil ataca a un cliente. Tu papel: detectar, contener y reportar — todo lo aprendido al servicio del blue team.",
+  },
+  {
+    id: 9,
+    title: "Detección y análisis defensivo",
+    subtitle: "YARA-like, typosquat, IOCs, deps, reglas Sigma",
+    summary: "El bloque de threat intel y análisis: clasificar muestras por strings, detectar paquetes typosquat en la cadena de suministro, extraer IOCs de emails, auditar dependencias y escribir reglas de detección. Todo el lado del analista.",
   },
 ];
