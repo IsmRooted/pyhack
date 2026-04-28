@@ -8,6 +8,8 @@ Todo el código del jugador se ejecuta en un sandbox dentro del navegador (Pyodi
 
 Pensado como complemento práctico para cualquiera que quiera aprender Python con un foco aplicado al campo de la seguridad — útil tanto antes de meterse en plataformas tipo HackTheBox / TryHackMe / PortSwigger como para reforzar la parte de scripting de cara a certificaciones (OSCP, eJPT, BTL1, GCFA, etc.).
 
+El juego tiene index.html, asi que se puede jugar vía Github Pages: https://ismrooted.github.io/pyhack/
+
 ---
 
 ## ⚠ Disclaimer ético
